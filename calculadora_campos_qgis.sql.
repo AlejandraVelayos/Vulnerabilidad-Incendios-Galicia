@@ -95,3 +95,81 @@ CASE
   WHEN "ReSVI_fin" > 0.53 AND "ReSVI_fin" <= 0.59 THEN '4_Muy_Alta'
   WHEN "ReSVI_fin" > 0.59 THEN '5_Extrema'
 END;
+/* ---------------------------------------------------------------------
+   6. FLUJOGRAMA (mermaid)
+--------------------------------------------------------------------- */
+graph TD
+    subgraph S1 [1. DATOS DE ENTRADA Y FUENTES]
+        D_Soc["INE (Censo 2021) + Catastro"]
+        D_Eco["IGN (BTN25: Ferrocarril y Red Eléctrica)"]
+        D_Nat["FirEUrisk (Combustibles, LEV, Resiliencia)"]
+        D_Pre["IGN (BTN25) + LumeMaps V.2 (Xunta)"]
+        D_Val["Histórico Incendios (2000-2023) + ZAR (PLADIGA)"]
+    end
+
+    subgraph S2 [2. GEOPROCESAMIENTO EN MALLA 1x1 km]
+        P_Soc["Modelo Dasimétrico (Social)<br>Población sobre huella y plantas"]
+        P_Eco["Densidades (Económico)<br>m/km² lineales y nº/km² puntuales"]
+        P_Nat["Reclasificación + Estadística Zonal (Natural)<br>Combustibles, LEV y Resiliencia"]
+        P_Pre["Análisis de Redes y Densidad (Prevención)<br>Cortafuegos, puntos de agua y brigadas"]
+    end
+
+    subgraph S3 [3. NORMALIZACIÓN Y SUBÍNDICES]
+        Norm["Estandarización Min-Max [0, 1]<br>(Directa / Inversa para protección)"]
+        Sub_Soc["Subíndice Social"]
+        Sub_Eco["Subíndice Económico"]
+        Sub_Nat["Subíndice Natural"]
+        Sub_Pre["Subíndice Prevención"]
+    end
+
+    subgraph S4 [4. INTEGRACIÓN GLOBAL ICA - ReSVI]
+        CLP["Álgebra de mapas: CLP<br>ReSVI = 0,25·(Soc + Econ + Nat + Prev)"]
+        Disc["Discretización cualitativa en 4 niveles<br>(Baja, Media, Alta, Extrema)"]
+        ReSVI_Final["MAPA FINAL ReSVI GLOBAL (1x1 km)"]
+    end
+
+    subgraph S5 [5. CONTRASTE Y VALIDACIÓN ESPACIAL]
+        Over["Superposición espacial (Overlay) e Intersección"]
+        Val_Inc["% de Superficie calcinada por nivel ReSVI"]
+        Val_ZAR["% de Coincidencia territorial con ZAR"]
+    end
+
+    D_Soc --> P_Soc
+    D_Eco --> P_Eco
+    D_Nat --> P_Nat
+    D_Pre --> P_Pre
+
+    P_Soc --> Norm
+    P_Eco --> Norm
+    P_Nat --> Norm
+    P_Pre --> Norm
+
+    Norm --> Sub_Soc
+    Norm --> Sub_Eco
+    Norm --> Sub_Nat
+    Norm --> Sub_Pre
+
+    Sub_Soc --> CLP
+    Sub_Eco --> CLP
+    Sub_Nat --> CLP
+    Sub_Pre --> CLP
+    CLP --> Disc
+    Disc --> ReSVI_Final
+
+    ReSVI_Final --> Over
+    D_Val --> Over
+    Over --> Val_Inc
+    Over --> Val_ZAR
+
+    %% Colores de los rectángulos grandes (Fases)
+    style S1 fill:#edf2f7,stroke:#4a5568,stroke-width:2px
+    style S2 fill:#fef3c7,stroke:#d97706,stroke-width:2px
+    style S3 fill:#e0f2fe,stroke:#0284c7,stroke-width:2px
+    style S4 fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+    style S5 fill:#f3e8ff,stroke:#9333ea,stroke-width:2px
+
+    %% Colores específicos de las 4 dimensiones en el Nivel 2
+    style P_Soc fill:#ffedd5,stroke:#ea580c,stroke-width:1.5px
+    style P_Eco fill:#fef08a,stroke:#ca8a04,stroke-width:1.5px
+    style P_Nat fill:#dcfce7,stroke:#15803d,stroke-width:1.5px
+    style P_Pre fill:#fee2e2,stroke:#b91c1c,stroke-width:1.5px
