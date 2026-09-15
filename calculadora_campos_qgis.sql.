@@ -98,78 +98,117 @@ END;
 /* ---------------------------------------------------------------------
    6. FLUJOGRAMA (mermaid)
 --------------------------------------------------------------------- */
-graph TD
-    subgraph S1 [1. DATOS DE ENTRADA Y FUENTES]
-        D_Soc["INE (Censo 2021) + Catastro"]
-        D_Eco["IGN (BTN25: Ferrocarril y Red Eléctrica)"]
-        D_Nat["FirEUrisk (Combustibles, LEV, Resiliencia)"]
-        D_Pre["IGN (BTN25) + LumeMaps V.2 (Xunta)"]
-        D_Val["Histórico Incendios (2000-2023) + ZAR (PLADIGA)"]
+%%{init: {'theme': 'base', 'themeVariables': { 'fontFamily': 'arial', 'fontSize': '15px'}}}%%
+flowchart TD
+
+    %% -----------------------------------------
+    %% 1. DATOS DE ENTRADA Y FUENTES
+    %% -----------------------------------------
+    subgraph F1 ["1. DATOS DE ENTRADA Y FUENTES"]
+        direction TB
+        subgraph F1_A [" "]
+            direction LR
+            E1["<b>Datos de Población</b>"]
+            E2["<b>Catastro</b>"]
+        end
+        subgraph F1_B [" "]
+            direction LR
+            E4["<b>Mapa de combustibles</b>"]
+            E5["<b>Resiliencia de la vegetación</b>"]
+        end
+        subgraph F1_C [" "]
+            direction LR
+            E3["<b>Red de comunicaciones</b>"]
+            E6["<b>Cortafuegos y puntos de agua</b>"]
+        end
     end
 
-    subgraph S2 [2. GEOPROCESAMIENTO EN MALLA 1x1 km]
-        P_Soc["Modelo Dasimétrico (Social)<br>Población sobre huella y plantas"]
-        P_Eco["Densidades (Económico)<br>m/km² lineales y nº/km² puntuales"]
-        P_Nat["Reclasificación + Estadística Zonal (Natural)<br>Combustibles, LEV y Resiliencia"]
-        P_Pre["Análisis de Redes y Densidad (Prevención)<br>Cortafuegos, puntos de agua y brigadas"]
+    %% -----------------------------------------
+    %% 2. GEOPROCESAMIENTO EN MALLA 1x1 km
+    %% -----------------------------------------
+    subgraph F2 ["2. GEOPROCESAMIENTO EN MALLA 1x1 km"]
+        direction LR
+        G1["<b>Modelo dasimétrico:</b><br/>variables de población"]
+        G2["<b>Cálculo de densidades</b>"]
+        G3["<b>Asignación de pesos</b>"]
+        G4["<b>Análisis de redes y densidad</b>"]
     end
 
-    subgraph S3 [3. NORMALIZACIÓN Y SUBÍNDICES]
-        Norm["Estandarización Min-Max [0, 1]<br>(Directa / Inversa para protección)"]
-        Sub_Soc["Subíndice Social"]
-        Sub_Eco["Subíndice Económico"]
-        Sub_Nat["Subíndice Natural"]
-        Sub_Pre["Subíndice Prevención"]
+    %% -----------------------------------------
+    %% 3. NORMALIZACIÓN
+    %% -----------------------------------------
+    subgraph F3 ["3. NORMALIZACIÓN"]
+        N1["<b>Normalización</b>"]
     end
 
-    subgraph S4 [4. INTEGRACIÓN GLOBAL ICA - ReSVI]
-        CLP["Álgebra de mapas: CLP<br>ReSVI = 0,25·(Soc + Econ + Nat + Prev)"]
-        Disc["Discretización cualitativa en 4 niveles<br>(Baja, Media, Alta, Extrema)"]
-        ReSVI_Final["MAPA FINAL ReSVI GLOBAL (1x1 km)"]
+    %% -----------------------------------------
+    %% 4. INTEGRACIÓN GLOBAL
+    %% -----------------------------------------
+    subgraph F4 ["4. INTEGRACIÓN GLOBAL"]
+        direction TB
+        I1["<b>Integración</b>"]
+        I2["<b>Índice ReSVI</b>"]
     end
 
-    subgraph S5 [5. CONTRASTE Y VALIDACIÓN ESPACIAL]
-        Over["Superposición espacial (Overlay) e Intersección"]
-        Val_Inc["% de Superficie calcinada por nivel ReSVI"]
-        Val_ZAR["% de Coincidencia territorial con ZAR"]
+    %% -----------------------------------------
+    %% 5. COMPARACIÓN ESPACIAL
+    %% -----------------------------------------
+    subgraph F5 ["5. COMPARACIÓN ESPACIAL"]
+        direction TB
+        subgraph F5_ROW [" "]
+            direction LR
+            M1["<b>MAPA FINAL ReSVI GLOBAL<br/>(1x1 km)</b>"]
+            H1["<b>Históricos de incendios</b>"]
+            H2["<b>Zonas ZAR</b>"]
+        end
+        C1["<b>Comparación espacial</b>"]
     end
 
-    D_Soc --> P_Soc
-    D_Eco --> P_Eco
-    D_Nat --> P_Nat
-    D_Pre --> P_Pre
+    %% CONEXIONES
+    E1 --> G1
+    E2 --> G1
+    E4 --> G2
+    E5 --> G2
+    E3 --> G4
+    E6 --> G4
 
-    P_Soc --> Norm
-    P_Eco --> Norm
-    P_Nat --> Norm
-    P_Pre --> Norm
+    G1 --> N1
+    G2 --> N1
+    G3 --> N1
+    G4 --> N1
 
-    Norm --> Sub_Soc
-    Norm --> Sub_Eco
-    Norm --> Sub_Nat
-    Norm --> Sub_Pre
+    N1 --> I1
+    I1 --> I2
+    I2 --> M1
 
-    Sub_Soc --> CLP
-    Sub_Eco --> CLP
-    Sub_Nat --> CLP
-    Sub_Pre --> CLP
-    CLP --> Disc
-    Disc --> ReSVI_Final
+    M1 --> C1
+    H1 --> C1
+    H2 --> C1
 
-    ReSVI_Final --> Over
-    D_Val --> Over
-    Over --> Val_Inc
-    Over --> Val_ZAR
+    %% ESTILOS Y COLORES
+    classDef entrada fill:#FFFFFF,stroke:#333333,stroke-width:1.5px,color:#111111;
+    classDef geoproceso fill:#FFF2CC,stroke:#D6B656,stroke-width:1.5px,color:#111111;
+    classDef normalizacion fill:#DAE8FC,stroke:#6C8EBF,stroke-width:1.5px,color:#111111;
+    classDef integracion fill:#D5E8D4,stroke:#82B366,stroke-width:1.5px,color:#111111;
+    classDef comparacion fill:#E1D5E7,stroke:#9673A6,stroke-width:1.5px,color:#111111;
+    classDef mapaFinal fill:#D5E8D4,stroke:#274E13,stroke-width:2px,color:#111111;
 
-    %% Colores de los rectángulos grandes (Fases)
-    style S1 fill:#edf2f7,stroke:#4a5568,stroke-width:2px
-    style S2 fill:#fef3c7,stroke:#d97706,stroke-width:2px
-    style S3 fill:#e0f2fe,stroke:#0284c7,stroke-width:2px
-    style S4 fill:#dcfce7,stroke:#16a34a,stroke-width:2px
-    style S5 fill:#f3e8ff,stroke:#9333ea,stroke-width:2px
+    class E1,E2,E3,E4,E5,E6 entrada;
+    class G1,G2,G3,G4 geoproceso;
+    class N1 normalizacion;
+    class I1,I2 integracion;
+    class H1,H2,C1 comparacion;
+    class M1 mapaFinal;
 
-    %% Colores específicos de las 4 dimensiones en el Nivel 2
-    style P_Soc fill:#ffedd5,stroke:#ea580c,stroke-width:1.5px
-    style P_Eco fill:#fef08a,stroke:#ca8a04,stroke-width:1.5px
-    style P_Nat fill:#dcfce7,stroke:#15803d,stroke-width:1.5px
-    style P_Pre fill:#fee2e2,stroke:#b91c1c,stroke-width:1.5px
+    style F1 fill:#F8F9FA,stroke:#666666,stroke-width:2px,stroke-dasharray: 4 4;
+    style F2 fill:#FFFDF5,stroke:#D6B656,stroke-width:2px;
+    style F3 fill:#F4F8FD,stroke:#6C8EBF,stroke-width:2px;
+    style F4 fill:#F3F9F3,stroke:#82B366,stroke-width:2px;
+    style F5 fill:#F8F4FA,stroke:#9673A6,stroke-width:2px;
+    style F1_A fill:none,stroke:none;
+    style F1_B fill:none,stroke:none;
+    style F1_C fill:none,stroke:none;
+    style F5_ROW fill:none,stroke:none;
+   
+   
+
